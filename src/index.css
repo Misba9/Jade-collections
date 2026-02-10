@@ -26,6 +26,14 @@
   .text-shadow-lg {
     text-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
+
+  /* Logo background for navbar & footer – image + overlay for readability */
+  .bg-logo-pattern {
+    background-image: linear-gradient(to bottom, rgba(4, 47, 46, 0.92), rgba(4, 47, 46, 0.88)), url('/logo-background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
 }
 
 /* Custom Scrollbar for Webkit */
@@ -44,4 +52,16 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #0f766e; 
+}
+
+/* Subtle page transition support */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

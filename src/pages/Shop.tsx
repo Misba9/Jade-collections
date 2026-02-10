@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Filter, ChevronDown } from 'lucide-react';
 import { products } from '../data/mockData';
 import { ProductCard } from '../components/product/ProductCard';
+import { container, item } from '../lib/animations';
 
 export const Shop = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <motion.div 
+      className="container mx-auto px-4 py-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+      <motion.div 
+        className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div>
           <h1 className="font-serif text-3xl font-bold text-jade-900">All Products</h1>
           <p className="text-gray-500 text-sm mt-1">Showing {products.length} results</p>
@@ -33,7 +45,7 @@ export const Shop = () => {
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <div className="flex gap-8">
         {/* Sidebar Filters (Desktop) */}
@@ -72,11 +84,18 @@ export const Shop = () => {
 
         {/* Product Grid */}
         <div className="flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            initial="hidden"
+            animate="show"
+            variants={container}
+          >
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <motion.div key={product.id} variants={item}>
+                <ProductCard product={product} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           
           {/* Pagination */}
           <div className="mt-12 flex justify-center gap-2">
@@ -86,6 +105,6 @@ export const Shop = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

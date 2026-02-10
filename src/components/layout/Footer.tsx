@@ -1,17 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Twitter, MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Facebook, Instagram, Twitter, MapPin, Phone, Mail } from 'lucide-react';
+import { container, item } from '../../lib/animations';
 
 export const Footer = () => {
   return (
-    <footer className="bg-jade-950 text-white pt-20 pb-10 border-t border-gold-900/30">
+    <motion.footer 
+      className="bg-logo-pattern text-white pt-20 pb-10 border-t border-gold-900/30"
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-100px" }}
+      variants={container}
+    >
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {/* Brand Info */}
-          <div className="space-y-6">
-            <Link to="/" className="block">
-                <h3 className="font-serif text-3xl font-bold text-white">JADE<span className="text-gold-500">.</span></h3>
-                <span className="text-[0.6rem] uppercase tracking-[0.4em] text-jade-300">Collections</span>
+          <motion.div className="space-y-6" variants={item}>
+            <Link to="/" className="block w-fit" aria-label="Jade Collections - Home">
+              <img src="/jade-logo.png" alt="Jade Collections" className="h-20 w-auto object-contain" />
             </Link>
             <p className="text-jade-200 text-sm leading-relaxed max-w-xs font-light">
               Discover the essence of royal elegance with our premium collection of ethnic wear. Crafted for the modern woman who cherishes tradition.
@@ -27,10 +34,10 @@ export const Footer = () => {
                 <Twitter className="w-4 h-4" />
               </a>
             </div>
-          </div>
+          </motion.div>
 
           {/* Quick Links */}
-          <div>
+          <motion.div variants={item}>
             <h4 className="font-serif text-lg font-medium mb-6 text-gold-200">Explore</h4>
             <ul className="space-y-4 text-sm text-jade-100/80">
               <li><Link to="/shop" className="hover:text-gold-400 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-px bg-gold-400 transition-all"></span> Shop All</Link></li>
@@ -38,10 +45,10 @@ export const Footer = () => {
               <li><Link to="/about" className="hover:text-gold-400 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-px bg-gold-400 transition-all"></span> Our Story</Link></li>
               <li><Link to="/blog" className="hover:text-gold-400 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-px bg-gold-400 transition-all"></span> Journal</Link></li>
             </ul>
-          </div>
+          </motion.div>
 
           {/* Policies */}
-          <div>
+          <motion.div variants={item}>
             <h4 className="font-serif text-lg font-medium mb-6 text-gold-200">Customer Care</h4>
             <ul className="space-y-4 text-sm text-jade-100/80">
               <li><Link to="/shipping" className="hover:text-gold-400 transition-colors">Shipping Policy</Link></li>
@@ -50,10 +57,10 @@ export const Footer = () => {
               <li><Link to="/terms" className="hover:text-gold-400 transition-colors">Terms of Service</Link></li>
               <li><Link to="/contact" className="hover:text-gold-400 transition-colors">Contact Support</Link></li>
             </ul>
-          </div>
+          </motion.div>
 
           {/* Contact */}
-          <div>
+          <motion.div variants={item}>
             <h4 className="font-serif text-lg font-medium mb-6 text-gold-200">Visit Us</h4>
             <ul className="space-y-6 text-sm text-jade-100/80">
               <li className="flex items-start gap-3">
@@ -62,17 +69,20 @@ export const Footer = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-gold-500 shrink-0" />
-                <span>+91 98765 43210</span>
+                <span>+91 987** **210</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-gold-500 shrink-0" />
                 <span>support@jadecollections.in</span>
               </li>
             </ul>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="border-t border-jade-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <motion.div 
+          className="border-t border-jade-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4"
+          variants={item}
+        >
           <p className="text-xs text-jade-400 font-light">© 2026 Jade Collections. All rights reserved.</p>
           <div className="flex gap-2 opacity-60">
             {/* Payment Icons Placeholders */}
@@ -80,8 +90,8 @@ export const Footer = () => {
             <div className="h-6 w-10 bg-white/10 rounded-sm"></div>
             <div className="h-6 w-10 bg-white/10 rounded-sm"></div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </footer>
+    </motion.footer>
   );
 };

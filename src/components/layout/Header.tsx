@@ -28,13 +28,16 @@ export const Header = () => {
 
   return (
     <>
-      <header 
+      <motion.header 
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent",
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b bg-logo-pattern",
           isScrolled || !isHome 
-            ? "bg-white/95 backdrop-blur-md py-2 shadow-sm border-stone-100 text-jade-950" 
-            : "bg-transparent py-6 text-white"
+            ? "py-2 shadow-lg border-gold-900/20 text-white backdrop-blur-[2px]" 
+            : "py-6 border-white/10 text-white"
         )}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
       >
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between">
@@ -66,16 +69,16 @@ export const Header = () => {
             </nav>
 
             {/* Logo - Center */}
-            <Link to="/" className="flex-shrink-0 mx-auto">
-              <div className="flex flex-col items-center">
-                {/* We use text here for better control, but in real scenario could be SVG */}
-                <h1 className={cn("font-serif text-2xl md:text-3xl font-bold tracking-tight", isScrolled || !isHome ? "text-jade-900" : "text-white")}>
-                  JADE
-                  <span className="text-gold-500">.</span>
-                </h1>
-                <span className={cn("text-[0.5rem] uppercase tracking-[0.4em]", isScrolled || !isHome ? "text-jade-800" : "text-white/80")}>Collections</span>
-              </div>
-            </Link>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex-shrink-0 mx-auto"
+            >
+              <Link to="/" aria-label="Jade Collections - Home">
+                <img src="/jade-logo.png" alt="Jade Collections" className="h-10 md:h-12 w-auto object-contain" />
+              </Link>
+            </motion.div>
 
             {/* Desktop Navigation - Right (Icons) */}
             <div className="hidden lg:flex items-center justify-end gap-6 flex-1">
@@ -117,7 +120,7 @@ export const Header = () => {
             </Link>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
@@ -137,10 +140,9 @@ export const Header = () => {
               className="fixed inset-y-0 left-0 w-[85%] max-w-xs bg-white shadow-2xl p-8 flex flex-col"
             >
               <div className="flex items-center justify-between mb-12">
-                <div>
-                    <h2 className="font-serif text-2xl font-bold text-jade-900">JADE.</h2>
-                    <p className="text-[0.6rem] uppercase tracking-[0.3em] text-jade-700">Collections</p>
-                </div>
+                <Link to="/" onClick={() => setIsMenuOpen(false)} className="block">
+                  <img src="/jade-logo.png" alt="Jade Collections" className="h-9 w-auto object-contain" />
+                </Link>
                 <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
                   <X className="h-6 w-6 text-jade-900" />
                 </button>

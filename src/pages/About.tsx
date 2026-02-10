@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { container, item } from '../lib/animations';
 
 export const About = () => {
   return (
@@ -9,23 +10,34 @@ export const About = () => {
         <div className="absolute inset-0 opacity-40">
             <img src="https://images.unsplash.com/photo-1605218427368-35b016df2e87?q=80&w=2000&auto=format&fit=crop" alt="Fabric texture" className="w-full h-full object-cover" />
         </div>
-        <div className="relative z-10 text-center text-white px-4">
+        <motion.div 
+          className="relative z-10 text-center text-white px-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
             <h1 className="font-serif text-5xl md:text-7xl mb-6">Our Story</h1>
             <p className="text-xl font-light text-jade-100 max-w-2xl mx-auto">Crafting elegance since 2010.</p>
-        </div>
+        </motion.div>
       </section>
 
       {/* Content */}
       <section className="py-24 container mx-auto px-4">
-        <div className="max-w-4xl mx-auto space-y-16">
-            <div className="text-center space-y-6">
+        <motion.div 
+          className="max-w-4xl mx-auto space-y-16"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={container}
+        >
+            <motion.div className="text-center space-y-6" variants={item}>
                 <h2 className="font-serif text-3xl md:text-4xl text-jade-900">The Jade Philosophy</h2>
                 <p className="text-gray-600 leading-loose text-lg">
                     Jade Collections was born out of a desire to bridge the gap between traditional Indian craftsmanship and modern aesthetics. We believe that clothing is not just about covering the body, but about expressing one's identity and heritage. Our name, inspired by the precious gemstone, symbolizes purity, serenity, and timeless beauty—qualities we strive to imbue in every garment we create.
                 </p>
-            </div>
+            </motion.div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <motion.div className="grid md:grid-cols-2 gap-8" variants={item}>
                 <img src="https://images.unsplash.com/photo-1575958951208-4e610250bc7b?q=80&w=800&auto=format&fit=crop" alt="Workshop" className="w-full h-full object-cover aspect-square" />
                 <div className="flex flex-col justify-center space-y-6 p-8 bg-stone-50">
                     <h3 className="font-serif text-2xl text-jade-900">Artisanal Excellence</h3>
@@ -33,9 +45,9 @@ export const About = () => {
                         We work directly with master weavers and artisans from across India. From the intricate Zardosi of Lucknow to the vibrant prints of Jaipur, our collections are a celebration of India's diverse textile heritage. Every stitch is placed with precision, ensuring that the final product is nothing short of a masterpiece.
                     </p>
                 </div>
-            </div>
+            </motion.div>
 
-            <div className="grid md:grid-cols-2 gap-8 md:flex-row-reverse">
+            <motion.div className="grid md:grid-cols-2 gap-8 md:flex-row-reverse" variants={item}>
                 <div className="flex flex-col justify-center space-y-6 p-8 bg-stone-50 order-2 md:order-1">
                     <h3 className="font-serif text-2xl text-jade-900">Sustainable Luxury</h3>
                     <p className="text-gray-600 leading-relaxed">
@@ -43,8 +55,8 @@ export const About = () => {
                     </p>
                 </div>
                 <img src="https://images.unsplash.com/photo-1604176354204-9268737828e4?q=80&w=800&auto=format&fit=crop" alt="Sustainability" className="w-full h-full object-cover aspect-square order-1 md:order-2" />
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
       </section>
     </div>
   );

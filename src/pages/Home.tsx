@@ -5,38 +5,69 @@ import { ArrowRight, Star, Leaf, Award, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ProductCard } from '../components/product/ProductCard';
 import { products, categories } from '../data/mockData';
-
-const fadeIn = {
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] }
-};
+import { fadeIn, staggerContainer, container, item } from '../lib/animations';
 
 export const Home = () => {
   const featuredProducts = products.slice(0, 4);
 
   return (
     <div className="bg-stone-50">
-      {/* Hero Section */}
+      {/* Hero Section - Multiple images */}
       <section className="relative h-screen w-full overflow-hidden">
-        <div className="absolute inset-0">
-          <img 
-            src="https://images.unsplash.com/photo-1583391733958-e02376e9ced3?q=80&w=2000&auto=format&fit=crop" 
-            alt="Royal Ethnic Wear" 
-            className="h-full w-full object-cover object-top scale-105 animate-[kenburns_20s_infinite_alternate]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
-          <div className="absolute inset-0 bg-jade-950/30 mix-blend-multiply" />
+        <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-12 grid-rows-1 md:grid-rows-2 gap-0.5 md:gap-1">
+          {/* Main large image - left 2/3 */}
+          <motion.div 
+            className="relative col-span-1 md:col-span-8 md:row-span-2"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <img 
+              src="https://images.unsplash.com/photo-1583391733958-e02376e9ced3?q=80&w=1200&auto=format&fit=crop" 
+              alt="Royal ethnic wear collection" 
+              className="h-full w-full object-cover object-center"
+            />
+          </motion.div>
+          {/* Top right image */}
+          <motion.div 
+            className="relative hidden md:block md:col-span-4 md:row-span-1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <img 
+              src="https://images.unsplash.com/photo-1595776613215-fe04b78de7d0?q=80&w=800&auto=format&fit=crop" 
+              alt="Elegant ethnic fashion" 
+              className="h-full w-full object-cover object-center"
+            />
+          </motion.div>
+          {/* Bottom right image */}
+          <motion.div 
+            className="relative hidden md:block md:col-span-4 md:row-span-1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <img 
+              src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=800&auto=format&fit=crop" 
+              alt="Traditional craftsmanship" 
+              className="h-full w-full object-cover object-center"
+            />
+          </motion.div>
         </div>
+        {/* Overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-black/40 md:from-black/55 md:via-transparent md:to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
+        <div className="absolute inset-0 bg-jade-950/25 mix-blend-multiply" />
         
-        <div className="relative container h-full flex items-center justify-center text-center">
+        <div className="relative container h-full flex items-center justify-center text-center md:justify-start md:text-left">
           <motion.div 
             initial="initial"
             animate="animate"
             variants={{
               animate: { transition: { staggerChildren: 0.2 } }
             }}
-            className="max-w-4xl text-white space-y-8 px-4"
+            className="max-w-4xl text-white space-y-8 px-4 md:pl-8 lg:pl-12"
           >
             <motion.div variants={fadeIn}>
                 <span className="inline-block border border-white/30 backdrop-blur-sm px-4 py-1.5 text-xs font-bold uppercase tracking-[0.3em] text-gold-200 mb-4">
@@ -48,11 +79,11 @@ export const Home = () => {
               The Art of <br/> <span className="italic text-gold-200">Timeless</span> Elegance
             </motion.h1>
             
-            <motion.p variants={fadeIn} className="text-stone-200 text-lg md:text-xl font-light max-w-2xl mx-auto leading-relaxed">
+            <motion.p variants={fadeIn} className="text-stone-200 text-lg md:text-xl font-light max-w-2xl mx-auto md:mx-0 leading-relaxed">
               Curated ethnic wear that blends royal heritage with contemporary finesse.
             </motion.p>
             
-            <motion.div variants={fadeIn} className="pt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <motion.div variants={fadeIn} className="pt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Link to="/shop">
                 <Button variant="gold" size="lg" className="min-w-[180px]">
                   Shop Collection
@@ -82,35 +113,47 @@ export const Home = () => {
       {/* Brand Values */}
       <section className="py-20 bg-white border-b border-stone-100">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center divide-y md:divide-y-0 md:divide-x divide-stone-100">
-            <div className="px-4 py-4 space-y-4">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center divide-y md:divide-y-0 md:divide-x divide-stone-100"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={container}
+          >
+            <motion.div className="px-4 py-4 space-y-4" variants={item}>
               <div className="w-12 h-12 mx-auto bg-jade-50 rounded-full flex items-center justify-center text-jade-800">
                 <Leaf className="w-6 h-6" />
               </div>
               <h3 className="font-serif text-xl font-bold text-jade-900">Premium Fabrics</h3>
               <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">Sourced from the finest artisans, ensuring breathability and luxurious drape.</p>
-            </div>
-            <div className="px-4 py-4 space-y-4">
+            </motion.div>
+            <motion.div className="px-4 py-4 space-y-4" variants={item}>
               <div className="w-12 h-12 mx-auto bg-jade-50 rounded-full flex items-center justify-center text-jade-800">
                 <Award className="w-6 h-6" />
               </div>
               <h3 className="font-serif text-xl font-bold text-jade-900">Handcrafted</h3>
               <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">Intricate embroidery and detailing done by master craftsmen.</p>
-            </div>
-            <div className="px-4 py-4 space-y-4">
+            </motion.div>
+            <motion.div className="px-4 py-4 space-y-4" variants={item}>
               <div className="w-12 h-12 mx-auto bg-jade-50 rounded-full flex items-center justify-center text-jade-800">
                 <Sparkles className="w-6 h-6" />
               </div>
               <h3 className="font-serif text-xl font-bold text-jade-900">Exclusive Designs</h3>
               <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">Limited edition pieces that ensure you stand out in every gathering.</p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Categories - Editorial Style */}
       <section className="py-24 container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+        <motion.div 
+          className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="max-w-lg">
             <span className="text-gold-600 font-bold uppercase tracking-widest text-xs mb-2 block">Curated Collections</span>
             <h2 className="font-serif text-4xl md:text-5xl font-medium text-jade-950">Shop by Category</h2>
@@ -118,11 +161,18 @@ export const Home = () => {
           <Link to="/collections" className="group flex items-center gap-2 text-jade-900 font-bold uppercase tracking-widest text-xs border-b border-jade-900 pb-1">
             View All Collections <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
-        </div>
+        </motion.div>
         
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px]">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px]"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={container}
+        >
           {/* Large Item */}
-          <Link to={`/shop?category=${categories[0].slug}`} className="md:col-span-6 relative group overflow-hidden h-[400px] md:h-full">
+          <motion.div variants={item} className="md:col-span-6">
+          <Link to={`/shop?category=${categories[0].slug}`} className="relative group overflow-hidden h-[400px] md:h-full block">
             <img 
               src={categories[0].image} 
               alt={categories[0].name} 
@@ -134,9 +184,10 @@ export const Home = () => {
               <span className="text-xs font-bold uppercase tracking-widest underline decoration-gold-500 underline-offset-4">Explore</span>
             </div>
           </Link>
+          </motion.div>
 
           {/* Smaller Items Grid */}
-          <div className="md:col-span-6 grid grid-cols-2 gap-6 h-full">
+          <motion.div variants={item} className="md:col-span-6 grid grid-cols-2 gap-6 h-full">
              {categories.slice(1, 3).map((cat) => (
                 <Link to={`/shop?category=${cat.slug}`} key={cat.id} className="relative group overflow-hidden h-[300px] md:h-auto">
                     <img 
@@ -151,7 +202,8 @@ export const Home = () => {
                     </div>
                 </Link>
              ))}
-             <Link to="/shop" className="col-span-2 bg-jade-900 flex flex-col items-center justify-center text-center p-8 text-white group overflow-hidden relative">
+             <motion.div variants={item} className="col-span-2">
+             <Link to="/shop" className="bg-jade-900 flex flex-col items-center justify-center text-center p-8 text-white group overflow-hidden relative h-full min-h-[200px] block">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div className="relative z-10">
                     <h3 className="font-serif text-3xl mb-4 italic">The Wedding Edit</h3>
@@ -159,46 +211,73 @@ export const Home = () => {
                     <Button variant="gold" size="sm">View Collection</Button>
                 </div>
              </Link>
-          </div>
-        </div>
+             </motion.div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Featured Products */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 space-y-4">
+          <motion.div 
+            className="text-center mb-16 space-y-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
             <span className="text-gold-600 font-bold uppercase tracking-widest text-xs">New Arrivals</span>
             <h2 className="font-serif text-4xl md:text-5xl font-medium text-jade-950">Trending This Season</h2>
             <div className="w-24 h-px bg-jade-200 mx-auto mt-6" />
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={container}
+          >
             {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <motion.div key={product.id} variants={item}>
+                <ProductCard product={product} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           
-          <div className="mt-16 text-center">
+          <motion.div 
+            className="mt-16 text-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
              <Link to="/shop">
               <Button variant="outline" size="lg" className="min-w-[200px]">View All Products</Button>
              </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Story/About Teaser */}
       <section className="py-24 bg-stone-100 overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="relative order-2 md:order-1">
+          <motion.div 
+            className="grid md:grid-cols-2 gap-16 items-center"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={container}
+          >
+            <motion.div className="relative order-2 md:order-1" variants={item}>
                <div className="aspect-[4/5] bg-gray-300 relative z-10">
                  <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000&auto=format&fit=crop" alt="Craftsmanship" className="w-full h-full object-cover" />
                </div>
                <div className="absolute -bottom-8 -left-8 w-2/3 h-2/3 border border-jade-900 z-0 hidden md:block" />
                <div className="absolute -top-8 -right-8 w-2/3 h-2/3 bg-jade-900/5 z-0 hidden md:block" />
-            </div>
+            </motion.div>
             
-            <div className="space-y-8 order-1 md:order-2">
+            <motion.div className="space-y-8 order-1 md:order-2" variants={item}>
               <h2 className="font-serif text-4xl md:text-5xl font-medium text-jade-950 leading-tight">
                 Weaving Stories in <br/> <span className="text-jade-800 italic">Silk & Thread</span>
               </h2>
@@ -220,15 +299,21 @@ export const Home = () => {
                     <Button variant="primary">Read Our Story</Button>
                 </Link>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Newsletter */}
       <section className="py-24 bg-jade-950 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
-        <div className="container mx-auto px-4 relative z-10 text-center max-w-2xl">
+        <motion.div 
+          className="container mx-auto px-4 relative z-10 text-center max-w-2xl"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className="font-serif text-3xl md:text-4xl mb-6">Join the Inner Circle</h2>
           <p className="text-jade-200 mb-10 font-light">Subscribe to receive updates, access to exclusive deals, and more.</p>
           <form className="flex flex-col sm:flex-row gap-4">
@@ -239,7 +324,7 @@ export const Home = () => {
             />
             <Button variant="gold" className="px-10">Subscribe</Button>
           </form>
-        </div>
+        </motion.div>
       </section>
     </div>
   );

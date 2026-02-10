@@ -1,19 +1,36 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { container, item } from '../lib/animations';
 
 export const Contact = () => {
   return (
-    <div className="pt-24 pb-16 bg-stone-50 min-h-screen">
+    <motion.div 
+      className="pt-24 pb-16 bg-stone-50 min-h-screen"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
             <h1 className="font-serif text-4xl md:text-5xl text-jade-900 mb-4">Contact Us</h1>
             <p className="text-gray-600">We'd love to hear from you. Visit our boutique or send us a message.</p>
-        </div>
+        </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <motion.div 
+          className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto"
+          initial="hidden"
+          animate="show"
+          variants={container}
+        >
             {/* Contact Info */}
-            <div className="space-y-8">
+            <motion.div className="space-y-8" variants={item}>
                 <div className="bg-white p-8 shadow-sm border border-stone-100 space-y-6">
                     <h3 className="font-serif text-2xl text-jade-900">Boutique Information</h3>
                     
@@ -38,8 +55,8 @@ export const Contact = () => {
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-900">Phone</h4>
-                                <p className="text-gray-600 text-sm">+91 98765 43210</p>
-                                <p className="text-gray-600 text-sm">+91 40 1234 5678</p>
+                                <p className="text-gray-600 text-sm">+91 9----5 43210</p>
+                                <p className="text-gray-600 text-sm">+91 40 ---4 5678</p>
                             </div>
                         </div>
 
@@ -74,10 +91,10 @@ export const Contact = () => {
                         <span className="bg-white px-4 py-2 text-sm font-bold shadow-md">View on Google Maps</span>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Form */}
-            <div className="bg-white p-8 lg:p-12 shadow-lg border-t-4 border-jade-900">
+            <motion.div className="bg-white p-8 lg:p-12 shadow-lg border-t-4 border-jade-900" variants={item}>
                 <h3 className="font-serif text-2xl text-jade-900 mb-6">Send us a Message</h3>
                 <form className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -115,9 +132,9 @@ export const Contact = () => {
                         <Button className="w-full" size="lg">Send Message</Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };

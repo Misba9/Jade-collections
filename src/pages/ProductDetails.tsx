@@ -5,6 +5,7 @@ import { products } from '../data/mockData';
 import { Button } from '../components/ui/Button';
 import { formatPrice, cn } from '../lib/utils';
 import { motion } from 'framer-motion';
+import { container, item } from '../lib/animations';
 
 export const ProductDetails = () => {
   const { id } = useParams();
@@ -18,11 +19,21 @@ export const ProductDetails = () => {
   const images = product.images || [product.image, product.image, product.image];
 
   return (
-    <div className="pt-24 pb-16 bg-white min-h-screen">
+    <motion.div 
+      className="pt-24 pb-16 bg-white min-h-screen"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+        <motion.div 
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20"
+          initial="hidden"
+          animate="show"
+          variants={container}
+        >
           {/* Image Gallery - Sticky */}
-          <div className="space-y-6 lg:sticky lg:top-28 h-fit">
+          <motion.div className="space-y-6 lg:sticky lg:top-28 h-fit" variants={item}>
             <motion.div 
               key={activeImage}
               initial={{ opacity: 0 }}
@@ -55,10 +66,10 @@ export const ProductDetails = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Product Info */}
-          <div className="space-y-10 pt-4">
+          <motion.div className="space-y-10 pt-4" variants={item}>
             <div className="space-y-4">
               <nav className="text-xs text-gray-500 uppercase tracking-widest mb-4">
                 Home / Shop / {product.category}
@@ -184,9 +195,9 @@ export const ProductDetails = () => {
                     </div>
                 </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };

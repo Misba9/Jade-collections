@@ -34,10 +34,10 @@ export const products: Product[] = [
     price: 6999,
     originalPrice: 6999,
     category: 'Anarkali',
-    image: 'https://images.unsplash.com/photo-1593030761757-71faa11274dc?q=80&w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=800&auto=format&fit=crop',
     images: [
-      'https://images.unsplash.com/photo-1593030761757-71faa11274dc?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=800&auto=format&fit=crop'
+      'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1595776613215-fe04b78de7d0?q=80&w=800&auto=format&fit=crop'
     ],
     rating: 4.8,
     reviews: 124,
@@ -100,7 +100,7 @@ export const products: Product[] = [
     name: 'Mustard Yellow Festive Anarkali',
     price: 5500,
     category: 'Anarkali',
-    image: '/product_images/mustard-yellow-festive-anarkali.webp',
+    image: 'https://images.unsplash.com/photo-1583391733958-e02376e9ced3?q=80&w=800&auto=format&fit=crop',
     rating: 4.7,
     reviews: 45,
     isNew: true,
