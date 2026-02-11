@@ -1,7 +1,6 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Facebook, Instagram, Twitter, MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail } from 'lucide-react';
 import { container, item } from '../../lib/animations';
 
 export const Footer = () => {
@@ -18,7 +17,7 @@ export const Footer = () => {
           {/* Brand Info */}
           <motion.div className="space-y-6" variants={item}>
             <Link to="/" className="block w-fit" aria-label="Jade Collections - Home">
-              <img src="/jade-logo.png" alt="Jade Collections" className="h-22 w-auto object-contain" />
+              <img src="/jade-logo.png" alt="Jade Collections" className="h-20 w-auto object-contain" />
             </Link>
             <p className="text-jade-200 text-sm leading-relaxed max-w-xs font-light">
               Discover the essence of royal elegance with our premium collection of ethnic wear. Crafted for the modern woman who cherishes tradition.

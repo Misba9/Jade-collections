@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye } from 'lucide-react';
 import { Product } from '../../types';
@@ -9,7 +9,7 @@ interface ProductCardProps {
   product: Product;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: FC<ProductCardProps> = ({ product }) => {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}

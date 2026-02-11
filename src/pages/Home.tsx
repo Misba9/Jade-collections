@@ -1,11 +1,10 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star, Leaf, Award, Sparkles } from 'lucide-react';
+import { ArrowRight, Leaf, Award, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ProductCard } from '../components/product/ProductCard';
 import { products, categories } from '../data/mockData';
-import { fadeIn, staggerContainer, container, item } from '../lib/animations';
+import { fadeIn, container, item } from '../lib/animations';
 
 export const Home = () => {
   const featuredProducts = products.slice(0, 4);
