@@ -18,12 +18,12 @@ export const Footer = () => {
           {/* Brand Info */}
           <motion.div className="space-y-6" variants={item}>
             <Link to="/" className="block w-fit" aria-label="Jade Collections - Home">
-              <img src="/jade-logo.png" alt="Jade Collections" className="h-20 w-auto object-contain" />
+              <img src="/jade-logo.png" alt="Jade Collections" className="h-22 w-auto object-contain" />
             </Link>
             <p className="text-jade-200 text-sm leading-relaxed max-w-xs font-light">
               Discover the essence of royal elegance with our premium collection of ethnic wear. Crafted for the modern woman who cherishes tradition.
             </p>
-            <div className="flex gap-4 pt-2">
+            {/* <div className="flex gap-4 pt-2">
               <a href="#" className="w-10 h-10 rounded-full bg-jade-900 flex items-center justify-center hover:bg-gold-500 hover:text-white transition-all duration-300">
                 <Instagram className="w-4 h-4" />
               </a>
@@ -33,7 +33,7 @@ export const Footer = () => {
               <a href="#" className="w-10 h-10 rounded-full bg-jade-900 flex items-center justify-center hover:bg-gold-500 hover:text-white transition-all duration-300">
                 <Twitter className="w-4 h-4" />
               </a>
-            </div>
+            </div> */}
           </motion.div>
 
           {/* Quick Links */}
