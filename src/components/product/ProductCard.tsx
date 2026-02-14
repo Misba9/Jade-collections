@@ -16,16 +16,16 @@ export const ProductCard: FC<ProductCardProps> = ({ product }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5 }}
-      className="group relative bg-white"
+      className="group relative bg-white h-full flex flex-col min-w-0"
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
+      <div className="relative aspect-[3/4] overflow-hidden bg-stone-100 flex-shrink-0">
         <img
           src={product.image}
           alt={product.name}
           className="h-full w-full object-cover object-top transition-transform duration-700 ease-in-out group-hover:scale-110"
         />
         
-        {/* Overlay on hover */}
+        {/* Overlay on hover (desktop) */}
         <div className="absolute inset-0 bg-jade-950/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
         {/* Badges */}
@@ -40,24 +40,39 @@ export const ProductCard: FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
 
-        {/* Quick Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full transition-transform duration-300 group-hover:translate-y-0">
-           <div className="flex gap-2">
-             <button className="flex-1 bg-white text-jade-900 py-3 text-xs uppercase tracking-wider font-bold shadow-lg hover:bg-jade-900 hover:text-white transition-colors flex items-center justify-center gap-2">
-               <ShoppingBag className="w-4 h-4" /> Add to Cart
-             </button>
-             <Link to={`/product/${product.id}`} className="bg-white p-3 text-jade-900 shadow-lg hover:bg-gold-500 hover:text-white transition-colors">
-               <Eye className="w-4 h-4" />
-             </Link>
-           </div>
+        {/* Right side icons - Wishlist (top) & Eye (below) */}
+        <button 
+          className="absolute top-3 right-3 p-1.5 md:p-2 rounded-full bg-white/80 backdrop-blur-sm text-jade-900 opacity-100 md:opacity-0 md:translate-x-4 transition-all duration-300 md:group-hover:opacity-100 md:group-hover:translate-x-0 hover:text-red-500 z-10"
+          aria-label="Add to wishlist"
+        >
+          <Heart className="w-3 h-3 md:w-4 md:h-4" />
+        </button>
+        <Link 
+          to={`/product/${product.id}`} 
+          className="absolute top-12 right-3 p-1.5 md:p-2 rounded-full bg-white/80 backdrop-blur-sm text-jade-900 opacity-100 md:opacity-0 md:translate-x-4 transition-all duration-300 md:group-hover:opacity-100 md:group-hover:translate-x-0 hover:text-gold-600 z-10"
+          aria-label="View product"
+        >
+          <Eye className="w-3 h-3 md:w-4 md:h-4" />
+        </Link>
+
+        {/* Quick Actions overlay (desktop hover only) */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full transition-transform duration-300 md:group-hover:translate-y-0 hidden md:block">
+          <div className="flex gap-2">
+            <button className="flex-1 bg-white text-jade-900 py-3 text-xs uppercase tracking-wider font-bold shadow-lg hover:bg-jade-900 hover:text-white transition-colors flex items-center justify-center gap-2">
+              <ShoppingBag className="w-4 h-4" /> Add to Cart
+            </button>
+          </div>
         </div>
-        
-        <button className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm text-jade-900 opacity-0 translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 hover:text-red-500">
-          <Heart className="w-4 h-4" />
+      </div>
+
+      {/* Mobile Add to Cart - full width below image */}
+      <div className="md:hidden px-2 pt-2">
+        <button className="w-full bg-jade-900 text-white py-3 text-xs uppercase tracking-wider font-bold hover:bg-jade-800 transition-colors flex items-center justify-center gap-2">
+          <ShoppingBag className="w-3 h-3" /> Add to Cart
         </button>
       </div>
 
-      <div className="mt-5 text-center space-y-2 px-2">
+      <div className="mt-5 text-center space-y-2 px-2 flex-1 flex flex-col">
         <p className="text-[10px] text-gold-600 uppercase tracking-widest font-semibold">{product.category}</p>
         <h3 className="text-base font-serif text-jade-950 line-clamp-1 group-hover:text-gold-600 transition-colors">
           <Link to={`/product/${product.id}`}>

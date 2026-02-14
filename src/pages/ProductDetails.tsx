@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { Star, Minus, Plus, Heart, Share2, Truck, RotateCcw, ShieldCheck } from 'lucide-react';
-import { products } from '../data/mockData';
+import { productsApi, cartApi } from '../lib/api';
+import { apiProductToProduct } from '../lib/productMapper';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { formatPrice, cn } from '../lib/utils';
 import { motion } from 'framer-motion';
@@ -9,14 +11,69 @@ import { container, item } from '../lib/animations';
 
 export const ProductDetails = () => {
   const { id } = useParams();
-  const product = products.find(p => p.id === id) || products[0];
-  
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>(product.colors[0]);
-  const [quantity, setQuantity] = useState(1);
-  const [activeImage, setActiveImage] = useState(product.image);
+  const { user } = useAuth();
+  const [product, setProduct] = useState<ReturnType<typeof apiProductToProduct> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
 
-  const images = product.images || [product.image, product.image, product.image];
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    productsApi
+      .get(id)
+      .then((res) => setProduct(apiProductToProduct(res.data.data)))
+      .catch(() => setProduct(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleAddToCart = async () => {
+    if (!product || !user) return;
+    setAddingToCart(true);
+    try {
+      await cartApi.addItem(product.id, 1, selectedSize || undefined, selectedColor || undefined);
+      alert('Added to cart!');
+    } catch {
+      alert('Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const p = product;
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>(p?.colors?.[0] ?? '');
+  const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState(p?.images?.[0] ?? p?.image ?? '');
+
+  useEffect(() => {
+    if (p) {
+      setSelectedColor(p.colors?.[0] ?? '');
+      setActiveImage(p.images?.[0] ?? p.image ?? '');
+    }
+  }, [p]);
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16 min-h-[60vh] flex items-center justify-center">
+        <div className="animate-pulse text-stone-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!p) {
+    return (
+      <div className="pt-24 pb-16 min-h-[60vh] flex flex-col items-center justify-center">
+        <p className="text-stone-600 mb-4">Product not found.</p>
+        <Link to="/shop">
+          <Button>Back to Shop</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const images = p.images?.length ? p.images : [p.image, p.image, p.image];
 
   return (
     <motion.div 
@@ -42,8 +99,8 @@ export const ProductDetails = () => {
               className="aspect-[3/4] bg-stone-100 overflow-hidden w-full relative group"
             >
               <img 
-                src={activeImage} 
-                alt={product.name} 
+              src={activeImage} 
+              alt={p.name}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 right-4 z-10">
@@ -72,9 +129,9 @@ export const ProductDetails = () => {
           <motion.div className="space-y-10 pt-4" variants={item}>
             <div className="space-y-4">
               <nav className="text-xs text-gray-500 uppercase tracking-widest mb-4">
-                Home / Shop / {product.category}
+                Home / Shop / {p.category}
               </nav>
-              <h1 className="font-serif text-4xl lg:text-5xl text-jade-950 leading-tight">{product.name}</h1>
+              <h1 className="font-serif text-4xl lg:text-5xl text-jade-950 leading-tight">{p.name}</h1>
               
               <div className="flex items-center gap-6 text-sm">
                 <div className="flex items-center gap-1 text-gold-500">
@@ -83,18 +140,18 @@ export const ProductDetails = () => {
                   <Star className="w-4 h-4 fill-current" />
                   <Star className="w-4 h-4 fill-current" />
                   <Star className="w-4 h-4 fill-current text-gray-300" />
-                  <span className="text-gray-500 ml-2 underline decoration-gray-300 underline-offset-4">{product.reviews} Reviews</span>
+                  <span className="text-gray-500 ml-2 underline decoration-gray-300 underline-offset-4">{p.reviews} Reviews</span>
                 </div>
                 <span className="text-green-600 font-medium flex items-center gap-1"><ShieldCheck className="w-4 h-4" /> In Stock</span>
               </div>
 
               <div className="flex items-baseline gap-4 pt-2">
-                <span className="text-3xl font-serif text-jade-900">{formatPrice(product.price)}</span>
-                {product.originalPrice && (
+                <span className="text-3xl font-serif text-jade-900">{formatPrice(p.price)}</span>
+                {p.originalPrice && (
                   <>
-                    <span className="text-lg text-gray-400 line-through font-light">{formatPrice(product.originalPrice)}</span>
+                    <span className="text-lg text-gray-400 line-through font-light">{formatPrice(p.originalPrice)}</span>
                     <span className="text-xs font-bold text-gold-600 uppercase tracking-wider border border-gold-200 bg-gold-50 px-2 py-1">
-                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                      {Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}% OFF
                     </span>
                   </>
                 )}
@@ -106,7 +163,7 @@ export const ProductDetails = () => {
 
             {/* Description Short */}
             <p className="text-gray-600 leading-relaxed font-light text-lg">
-                {product.description} Crafted with precision to offer you a blend of comfort and royal aesthetics.
+                {p.description || 'Crafted with precision to offer you a blend of comfort and royal aesthetics.'}
             </p>
 
             {/* Variants */}
@@ -114,7 +171,7 @@ export const ProductDetails = () => {
               <div>
                 <span className="text-xs font-bold uppercase tracking-widest text-gray-900 block mb-3">Color: <span className="text-gray-500 font-normal">{selectedColor}</span></span>
                 <div className="flex gap-3">
-                  {product.colors.map(color => (
+                  {(p.colors?.length ? p.colors : ['Default']).map(color => (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
@@ -137,7 +194,7 @@ export const ProductDetails = () => {
                   <button className="text-xs text-jade-800 underline underline-offset-4">Size Guide</button>
                 </div>
                 <div className="grid grid-cols-5 gap-3">
-                  {product.sizes.map(size => (
+                  {(p.sizes?.length ? p.sizes : ['S', 'M', 'L', 'XL']).map(size => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
@@ -171,7 +228,17 @@ export const ProductDetails = () => {
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                <Button className="flex-1 h-12" size="lg">Add to Cart</Button>
+                {user ? (
+                  <Button type="button" className="flex-1 h-12" size="lg" onClick={handleAddToCart} isLoading={addingToCart}>
+                    Add to Cart
+                  </Button>
+                ) : (
+                  <Link to={`/login?redirect=/product/${id}`} className="flex-1">
+                    <Button className="w-full h-12" size="lg">
+                      Sign in to Add to Cart
+                    </Button>
+                  </Link>
+                )}
                 <button className="h-12 w-12 border border-gray-300 text-gray-600 hover:border-red-500 hover:text-red-500 transition-colors flex items-center justify-center">
                   <Heart className="w-6 h-6" />
                 </button>

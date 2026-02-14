@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Search, ShoppingBag, User, Menu, X, Heart } from 'lucide-react';
+import { Search, ShoppingBag, User, Menu, X, Heart, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 
 export const Header = () => {
+  const { user, logout } = useAuth();
+  const { cartCount } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
@@ -108,7 +112,11 @@ export const Header = () => {
                 </Link>
                 <Link to="/cart" className="hover:text-gold-500 transition-colors relative group">
                   <ShoppingBag className="h-4 w-4" />
-                  <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full">2</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-[9px] min-w-[1rem] h-4 flex items-center justify-center rounded-full px-1">
+                      {cartCount}
+                    </span>
+                  )}
                 </Link>
               </div>
             </div>
@@ -116,7 +124,11 @@ export const Header = () => {
             {/* Mobile Cart Icon */}
             <Link to="/cart" className="lg:hidden relative">
               <ShoppingBag className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 bg-gold-500 text-white text-[9px] w-3 h-3 flex items-center justify-center rounded-full">2</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gold-500 text-white text-[9px] min-w-[0.75rem] h-3 flex items-center justify-center rounded-full px-0.5">
+                  {cartCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>
@@ -163,9 +175,20 @@ export const Header = () => {
               </nav>
 
               <div className="pt-8 border-t border-stone-100">
-                <Link to="/login" className="flex items-center gap-3 text-jade-800 font-medium mb-4">
+                {user ? (
+                  <>
+                    <Link to="/profile" className="flex items-center gap-3 text-jade-800 font-medium mb-2" onClick={() => setIsMenuOpen(false)}>
+                      <User className="w-5 h-5" /> {user.name}
+                    </Link>
+                    <button onClick={() => { logout(); setIsMenuOpen(false); }} className="flex items-center gap-3 text-stone-600 hover:text-red-600 mb-4">
+                      <LogOut className="w-5 h-5" /> Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link to="/login" className="flex items-center gap-3 text-jade-800 font-medium mb-4" onClick={() => setIsMenuOpen(false)}>
                     <User className="w-5 h-5" /> Sign In / Register
-                </Link>
+                  </Link>
+                )}
                 <div className="flex gap-4 text-jade-400 mt-6">
                     {/* Social icons placeholder */}
                     <div className="w-8 h-8 rounded-full bg-jade-50 flex items-center justify-center">IG</div>

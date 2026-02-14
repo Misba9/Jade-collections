@@ -13,7 +13,7 @@ export interface Product {
   sizes: string[];
   colors: string[];
   description: string;
-  fabric: string;
+  fabric?: string;
 }
 
 export interface Category {

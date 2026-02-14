@@ -1,66 +1,167 @@
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Leaf, Award, Sparkles } from 'lucide-react';
+import { ArrowRight, Leaf, Award, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ProductCard } from '../components/product/ProductCard';
-import { products, categories } from '../data/mockData';
+import { ProductCardSkeleton } from '../components/ui/Skeleton';
+import { productsApi, categoriesApi, bannersApi } from '../lib/api';
+import { apiProductToProduct } from '../lib/productMapper';
+import type { Product, Category } from '../types';
 import { fadeIn, container, item } from '../lib/animations';
 
+const FALLBACK_HERO_IMAGES: { src: string; alt: string; link?: string }[] = [
+  { src: 'https://images.unsplash.com/photo-1595776613215-fe04b78de7d0?q=80&w=1200&auto=format&fit=crop', alt: 'Elegant ethnic fashion' },
+  { src: 'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=1200&auto=format&fit=crop', alt: 'Traditional craftsmanship' },
+];
+
+const SLIDE_INTERVAL = 4500;
+
+const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1583391733958-e02376e9ced3?q=80&w=800&auto=format&fit=crop';
+
 export const Home = () => {
-  const featuredProducts = products.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [heroBanners, setHeroBanners] = useState<{ src: string; alt: string; link?: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const nextSectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [productsRes, categoriesRes, bannersRes] = await Promise.all([
+          productsApi.list({ limit: 8, sort: 'latest', isFeatured: true }),
+          categoriesApi.listPublic(),
+          bannersApi.listPublic(),
+        ]);
+        let prods = (productsRes.data.data ?? []).map(apiProductToProduct);
+        if (prods.length === 0) {
+          const fallbackRes = await productsApi.list({ limit: 4, sort: 'latest' });
+          prods = (fallbackRes.data.data ?? []).map(apiProductToProduct);
+        }
+        setFeaturedProducts(prods.slice(0, 4));
+        setCategories(
+          (categoriesRes.data.data ?? []).map((c: { _id: string; name: string; slug?: string; image?: string }) => ({
+            id: c._id,
+            name: c.name,
+            slug: c.slug ?? c.name.toLowerCase().replace(/\s+/g, '-'),
+            image: c.image ?? DEFAULT_CATEGORY_IMAGE,
+          }))
+        );
+        const banners = (bannersRes.data.data ?? []).filter((b: { autoRotate?: boolean }) => b.autoRotate !== false);
+        if (banners.length > 0) {
+          setHeroBanners(
+            banners.map((b: { image: string; title?: string; link?: string }) => ({
+              src: b.image,
+              alt: b.title || 'Banner',
+              link: b.link,
+            }))
+          );
+        } else {
+          setHeroBanners(FALLBACK_HERO_IMAGES);
+        }
+      } catch {
+        setFeaturedProducts([]);
+        setCategories([]);
+        setHeroBanners(FALLBACK_HERO_IMAGES);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const scrollToNextSection = () => {
+    nextSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const heroSlides = heroBanners.length > 0 ? heroBanners : FALLBACK_HERO_IMAGES;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, SLIDE_INTERVAL);
+    return () => clearInterval(timer);
+  }, [currentSlide, heroSlides.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const goPrev = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+  };
+
+  const goNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  };
 
   return (
     <div className="bg-stone-50">
-      {/* Hero Section - Multiple images */}
-      <section className="relative h-screen w-full overflow-hidden">
-        <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-12 grid-rows-1 md:grid-rows-2 gap-0.5 md:gap-1">
-          {/* Main large image - left 2/3 */}
-          <motion.div 
-            className="relative col-span-1 md:col-span-8 md:row-span-2"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <img 
-              src="https://images.unsplash.com/photo-1583391733958-e02376e9ced3?q=80&w=1200&auto=format&fit=crop" 
-              alt="Royal ethnic wear collection" 
-              className="h-full w-full object-cover object-center"
-            />
-          </motion.div>
-          {/* Top right image */}
-          <motion.div 
-            className="relative hidden md:block md:col-span-4 md:row-span-1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <img 
-              src="https://images.unsplash.com/photo-1595776613215-fe04b78de7d0?q=80&w=800&auto=format&fit=crop" 
-              alt="Elegant ethnic fashion" 
-              className="h-full w-full object-cover object-center"
-            />
-          </motion.div>
-          {/* Bottom right image */}
-          <motion.div 
-            className="relative hidden md:block md:col-span-4 md:row-span-1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <img 
-              src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=800&auto=format&fit=crop" 
-              alt="Traditional craftsmanship" 
-              className="h-full w-full object-cover object-center"
-            />
-          </motion.div>
+      {/* Hero Section - Slideshow */}
+      <section className="relative min-h-screen w-full overflow-hidden">
+        {/* Background slideshow - dynamic from DB or fallback */}
+        <div className="absolute inset-0">
+          {heroSlides.map((image, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                index === currentSlide ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
+              }`}
+              aria-hidden={index !== currentSlide}
+            >
+              {image.link ? (
+                image.link.startsWith('/') ? (
+                  <Link to={image.link} className="block h-full w-full">
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="h-full w-full object-cover object-center"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'low'}
+                    />
+                  </Link>
+                ) : (
+                  <a
+                    href={image.link}
+                    className="block h-full w-full"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="h-full w-full object-cover object-center"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'low'}
+                    />
+                  </a>
+                )
+              ) : (
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="h-full w-full object-cover object-center"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={index === 0 ? 'high' : 'low'}
+                />
+              )}
+            </div>
+          ))}
         </div>
-        {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-black/40 md:from-black/55 md:via-transparent md:to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
-        <div className="absolute inset-0 bg-jade-950/25 mix-blend-multiply" />
-        
-        <div className="relative container h-full flex items-center justify-center text-center md:justify-start md:text-left">
-          <motion.div 
+
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/40 z-[2]" aria-hidden="true" />
+
+        {/* Gradient overlays - preserve existing styling */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-black/40 md:from-black/55 md:via-transparent md:to-black/30 z-[2]" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50 z-[2]" aria-hidden="true" />
+        <div className="absolute inset-0 bg-jade-950/25 mix-blend-multiply z-[2]" aria-hidden="true" />
+
+        {/* Hero content - fixed, does not move during slide change */}
+        <div className="relative z-10 container h-full min-h-screen flex items-center justify-center text-center md:justify-start md:text-left">
+          <motion.div
             initial="initial"
             animate="animate"
             variants={{
@@ -69,19 +170,19 @@ export const Home = () => {
             className="max-w-4xl text-white space-y-8 px-4 md:pl-8 lg:pl-12"
           >
             <motion.div variants={fadeIn}>
-                <span className="inline-block border border-white/30 backdrop-blur-sm px-4 py-1.5 text-xs font-bold uppercase tracking-[0.3em] text-gold-200 mb-4">
-                    Spring / Summer 2026
-                </span>
+              <span className="inline-block border border-white/30 backdrop-blur-sm px-4 py-1.5 text-xs font-bold uppercase tracking-[0.3em] text-gold-200 mb-4">
+                Spring / Summer 2026
+              </span>
             </motion.div>
-            
+
             <motion.h1 variants={fadeIn} className="font-serif text-5xl md:text-7xl lg:text-8xl font-medium leading-none tracking-tight">
-              The Art of <br/> <span className="italic text-gold-200">Timeless</span> Elegance
+              The Art of <br /> <span className="italic text-gold-200">Timeless</span> Elegance
             </motion.h1>
-            
+
             <motion.p variants={fadeIn} className="text-stone-200 text-lg md:text-xl font-light max-w-2xl mx-auto md:mx-0 leading-relaxed">
               Curated ethnic wear that blends royal heritage with contemporary finesse.
             </motion.p>
-            
+
             <motion.div variants={fadeIn} className="pt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Link to="/shop">
                 <Button variant="gold" size="lg" className="min-w-[180px]">
@@ -96,21 +197,61 @@ export const Home = () => {
             </motion.div>
           </motion.div>
         </div>
-        
-        {/* Scroll Indicator */}
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5, duration: 1 }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/60"
+
+        {/* Navigation arrows */}
+        <button
+          onClick={goPrev}
+          className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50"
+          aria-label="Previous slide"
         >
-            <span className="text-[10px] uppercase tracking-widest">Scroll</span>
-            <div className="w-px h-12 bg-gradient-to-b from-white to-transparent" />
-        </motion.div>
+          <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
+        </button>
+        <button
+          onClick={goNext}
+          className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
+        </button>
+
+        {/* Indicator dots */}
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+          {heroSlides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50 ${
+                index === currentSlide
+                  ? 'bg-white scale-125'
+                  : 'bg-white/50 hover:bg-white/70'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+              aria-current={index === currentSlide ? 'true' : undefined}
+            />
+          ))}
+        </div>
+
+        {/* Scroll Indicator - clickable */}
+        <motion.button
+          type="button"
+          onClick={scrollToNextSection}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 md:gap-2 text-white/60 hover:text-white/90 transition-colors duration-300 z-20 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-transparent rounded-sm cursor-pointer"
+          aria-label="Scroll to next section"
+        >
+          <span className="text-[9px] md:text-[10px] uppercase tracking-widest">Scroll</span>
+          <div className="w-px h-8 md:h-12 bg-gradient-to-b from-white to-transparent animate-bounce" />
+        </motion.button>
       </section>
 
-      {/* Brand Values */}
-      <section className="py-20 bg-white border-b border-stone-100">
+      {/* Brand Values - next section */}
+      <section
+        ref={nextSectionRef}
+        id="next-section"
+        className="py-20 bg-white border-b border-stone-100 scroll-mt-0"
+      >
         <div className="container mx-auto px-4">
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center divide-y md:divide-y-0 md:divide-x divide-stone-100"
@@ -170,6 +311,7 @@ export const Home = () => {
           variants={container}
         >
           {/* Large Item */}
+          {categories[0] && (
           <motion.div variants={item} className="md:col-span-6">
           <Link to={`/shop?category=${categories[0].slug}`} className="relative group overflow-hidden h-[400px] md:h-full block">
             <img 
@@ -184,6 +326,7 @@ export const Home = () => {
             </div>
           </Link>
           </motion.div>
+          )}
 
           {/* Smaller Items Grid */}
           <motion.div variants={item} className="md:col-span-6 grid grid-cols-2 gap-6 h-full">
@@ -231,17 +374,23 @@ export const Home = () => {
           </motion.div>
 
           <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-60px" }}
             variants={container}
           >
-            {featuredProducts.map((product) => (
-              <motion.div key={product.id} variants={item}>
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
+            {loading
+              ? Array(4).fill(0).map((_, i) => (
+                  <motion.div key={`skeleton-${i}`} variants={item} className="h-full min-w-0">
+                    <ProductCardSkeleton />
+                  </motion.div>
+                ))
+              : featuredProducts.map((product) => (
+                  <motion.div key={product.id} variants={item} className="h-full min-w-0">
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
           </motion.div>
           
           <motion.div 

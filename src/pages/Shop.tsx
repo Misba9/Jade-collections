@@ -1,16 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Filter, ChevronDown } from 'lucide-react';
-import { products } from '../data/mockData';
+import { productsApi, categoriesApi } from '../lib/api';
 import { ProductCard } from '../components/product/ProductCard';
+import { apiProductToProduct } from '../lib/productMapper';
+import type { Product, Category } from '../types';
 import { container, item } from '../lib/animations';
 
 export const Shop = () => {
+  const [searchParams] = useSearchParams();
+  const categorySlug = searchParams.get('category');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [sort, setSort] = useState('latest');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const categoriesRes = await categoriesApi.listPublic();
+        const cats = (categoriesRes.data.data ?? []).map((c: { _id: string; name: string; slug?: string; image?: string }) => ({
+          id: c._id,
+          name: c.name,
+          slug: c.slug ?? c.name.toLowerCase().replace(/\s+/g, '-'),
+          image: c.image ?? '',
+        }));
+        setCategories(cats);
+
+        const categoryId = categorySlug ? cats.find((c: { slug: string }) => c.slug === categorySlug)?.id : undefined;
+        const productsRes = await productsApi.list({
+          limit: 24,
+          sort,
+          ...(categoryId && { category: categoryId }),
+          isActive: 'true',
+        });
+        const prods = (productsRes.data.data ?? []).map(apiProductToProduct);
+        setProducts(prods);
+      } catch {
+        setProducts([]);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [categorySlug, sort]);
 
   return (
     <motion.div 
-      className="container mx-auto px-4 py-8"
+      className="container mx-auto px-4 pt-16 pb-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
@@ -24,7 +65,9 @@ export const Shop = () => {
       >
         <div>
           <h1 className="font-serif text-3xl font-bold text-jade-900">All Products</h1>
-          <p className="text-gray-500 text-sm mt-1">Showing {products.length} results</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {loading ? 'Loading...' : `Showing ${products.length} results`}
+          </p>
         </div>
         
         <div className="flex gap-4 w-full md:w-auto">
@@ -36,11 +79,15 @@ export const Shop = () => {
           </button>
           
           <div className="relative flex-1 md:flex-none">
-            <select className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-sm focus:outline-none focus:border-jade-900">
-              <option>Sort by: Popularity</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-              <option>Newest First</option>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-sm focus:outline-none focus:border-jade-900"
+            >
+              <option value="latest">Newest First</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="popularity">Popularity</option>
             </select>
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
           </div>
@@ -53,10 +100,21 @@ export const Shop = () => {
           <div>
             <h3 className="font-serif font-bold text-lg mb-4 text-jade-900">Categories</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li><label className="flex items-center gap-2 hover:text-jade-700 cursor-pointer"><input type="checkbox" className="accent-jade-900" /> Anarkali Suits</label></li>
-              <li><label className="flex items-center gap-2 hover:text-jade-700 cursor-pointer"><input type="checkbox" className="accent-jade-900" /> Straight Suits</label></li>
-              <li><label className="flex items-center gap-2 hover:text-jade-700 cursor-pointer"><input type="checkbox" className="accent-jade-900" /> Palazzo Sets</label></li>
-              <li><label className="flex items-center gap-2 hover:text-jade-700 cursor-pointer"><input type="checkbox" className="accent-jade-900" /> Party Wear</label></li>
+              <li>
+                <a href="/shop" className={`block hover:text-jade-700 ${!categorySlug ? 'font-semibold text-jade-900' : ''}`}>
+                  All Products
+                </a>
+              </li>
+              {categories.map((cat) => (
+                <li key={cat.id}>
+                  <a
+                    href={`/shop?category=${cat.slug}`}
+                    className={`block hover:text-jade-700 ${categorySlug === cat.slug ? 'font-semibold text-jade-900' : ''}`}
+                  >
+                    {cat.name}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -83,26 +141,23 @@ export const Shop = () => {
         </aside>
 
         {/* Product Grid */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
             initial="hidden"
             animate="show"
             variants={container}
           >
-            {products.map((product) => (
-              <motion.div key={product.id} variants={item}>
+            {(loading ? [] : products).map((product) => (
+              <motion.div key={product.id} variants={item} className="h-full min-w-0">
                 <ProductCard product={product} />
               </motion.div>
             ))}
           </motion.div>
           
-          {/* Pagination */}
-          <div className="mt-12 flex justify-center gap-2">
-            <button className="w-10 h-10 border border-jade-900 bg-jade-900 text-white font-medium">1</button>
-            <button className="w-10 h-10 border border-gray-300 hover:border-jade-900 transition-colors">2</button>
-            <button className="w-10 h-10 border border-gray-300 hover:border-jade-900 transition-colors">3</button>
-          </div>
+          {!loading && products.length === 0 && (
+            <p className="text-center text-stone-500 py-12">No products found.</p>
+          )}
         </div>
       </div>
     </motion.div>

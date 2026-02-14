@@ -1,28 +1,37 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { categories } from '../data/mockData';
+import { categoriesApi } from '../lib/api';
 
-// Extended mock data for collections page
-const collections = [
-  ...categories,
-  {
-    id: '5',
-    name: 'The Royal Wedding Edit',
-    slug: 'wedding',
-    image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=1000&auto=format&fit=crop',
-    description: 'Opulent designs for your special day.'
-  },
-  {
-    id: '6',
-    name: 'Summer Breeze',
-    slug: 'summer',
-    image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1000&auto=format&fit=crop',
-    description: 'Lightweight cottons and pastels.'
-  }
-];
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1583391733958-e02376e9ced3?q=80&w=800&auto=format&fit=crop';
+
+interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  description?: string;
+}
 
 export const Collections = () => {
+  const [collections, setCollections] = useState<Collection[]>([]);
+
+  useEffect(() => {
+    categoriesApi
+      .listPublic()
+      .then((res) => {
+        const cats = (res.data.data ?? []).map((c: { _id: string; name: string; slug?: string; image?: string }) => ({
+          id: c._id,
+          name: c.name,
+          slug: c.slug ?? c.name.toLowerCase().replace(/\s+/g, '-'),
+          image: c.image ?? DEFAULT_IMAGE,
+          description: `Discover the essence of ${c.name}, featuring exquisite craftsmanship.`,
+        }));
+        setCollections(cats);
+      })
+      .catch(() => setCollections([]));
+  }, []);
   return (
     <div className="pt-24 pb-16 bg-stone-50 min-h-screen">
       <div className="container mx-auto px-4">
