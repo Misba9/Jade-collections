@@ -6,6 +6,8 @@ export interface Product {
   category: string;
   image: string;
   images?: string[];
+  /** Color name -> image URLs (for color-wise image switching) */
+  colorImages?: Record<string, string[]>;
   rating: number;
   reviews: number;
   isNew?: boolean;

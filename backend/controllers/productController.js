@@ -1,25 +1,34 @@
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import ApiError from '../utils/ApiError.js';
-import { uploadMultipleToCloudinary } from '../utils/cloudinary.js';
+import {
+  uploadMultipleToCloudinary,
+  deleteMultipleFromCloudinary,
+  CLOUDINARY_FOLDERS,
+} from '../utils/cloudinaryUpload.js';
 import { logAdminActivity } from '../services/activityLogService.js';
 import { parseProductForm } from '../utils/parseProductForm.js';
-import { CLOUDINARY_FOLDERS } from '../config/cloudinary.js';
 import mongoose from 'mongoose';
+
+/**
+ * Extract public_ids from product images (for Cloudinary deletion)
+ * Handles both { url, public_id } and legacy string format
+ */
+const getPublicIds = (images) => {
+  if (!Array.isArray(images)) return [];
+  return images
+    .map((img) => (typeof img === 'object' && img?.public_id ? img.public_id : null))
+    .filter(Boolean);
+};
 
 /**
  * @desc    Create product
  * @route   POST /api/products
  * @access  Private/Admin
- * Supports multipart/form-data with multiple images or JSON with image URLs
+ * Accepts JSON with colors: [{ name, images: [{ url, public_id }] }]
  */
 export const createProduct = async (req, res, next) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[POST /products] req.body keys:', Object.keys(req.body || {}));
-      console.log('[POST /products] req.files count:', req.files?.length ?? 0);
-    }
-
     const productData = parseProductForm(req);
 
     if (!productData.title?.trim()) {
@@ -43,22 +52,20 @@ export const createProduct = async (req, res, next) => {
       throw new ApiError('Invalid or inactive category', 400);
     }
 
-    // Upload images to Cloudinary if files provided
-    if (productData._uploadedFiles?.length) {
-      const uploads = await uploadMultipleToCloudinary(
-        productData._uploadedFiles,
-        CLOUDINARY_FOLDERS.PRODUCTS
-      );
-      const uploadedUrls = uploads.map((u) => u.url);
-      productData.images = [...(productData._imageUrls || []), ...uploadedUrls];
-    } else if (productData._imageUrls !== undefined) {
-      productData.images = productData._imageUrls;
-    }
+    // Normalize colors: ensure images have order by array index
+    const colors = (productData.colors || []).map((c, ci) => ({
+      name: c.name || '',
+      images: (c.images || []).map((img, ii) => ({
+        url: typeof img === 'string' ? img : img?.url,
+        public_id: typeof img === 'object' ? img?.public_id : null,
+        order: ii,
+      })),
+    }));
 
-    delete productData._uploadedFiles;
-    delete productData._imageUrls;
-
-    const product = await Product.create(productData);
+    const product = await Product.create({
+      ...productData,
+      colors,
+    });
 
     logAdminActivity({
       action: 'product_create',
@@ -75,9 +82,6 @@ export const createProduct = async (req, res, next) => {
       data: product,
     });
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[POST /products] Error:', error.message);
-    }
     next(error);
   }
 };
@@ -86,37 +90,63 @@ export const createProduct = async (req, res, next) => {
  * @desc    Update product
  * @route   PUT /api/products/:id
  * @access  Private/Admin
- * Supports multipart/form-data with multiple images or JSON with image URLs
+ * Colors only. Handles: color removed -> delete images from Cloudinary;
+ * image removed -> delete from Cloudinary; new images -> client pre-uploads via upload-images.
  */
 export const updateProduct = async (req, res, next) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[PUT /products/:id] id:', req.params.id, 'req.body keys:', Object.keys(req.body || {}));
-    }
-
     const productData = parseProductForm(req);
-
-    // Check product exists first
     const existing = await Product.findById(req.params.id);
+
     if (!existing) {
       throw new ApiError('Product not found', 404);
     }
 
-    // Upload new images to Cloudinary if files provided
-    if (productData._uploadedFiles?.length) {
-      const uploads = await uploadMultipleToCloudinary(
-        productData._uploadedFiles,
-        CLOUDINARY_FOLDERS.PRODUCTS
+    const incomingColors = productData.colors || [];
+    const existingColors = existing.colors || [];
+
+    // Collect public_ids to delete: from removed colors + removed images within kept colors
+    const toDelete = [];
+
+    for (const existingColor of existingColors) {
+      const incomingColor = incomingColors.find(
+        (c) => c.name?.toLowerCase() === existingColor.name?.toLowerCase()
       );
-      const newUrls = uploads.map((u) => u.url);
-      const existingUrls = productData._imageUrls || [];
-      productData.images = [...existingUrls, ...newUrls];
-    } else if (productData._imageUrls !== undefined) {
-      productData.images = productData._imageUrls;
+
+      if (!incomingColor) {
+        // Entire color removed - delete all its images
+        toDelete.push(...getPublicIds(existingColor.images || []));
+      } else {
+        // Color kept - find removed images
+        const incomingIds = new Set(
+          (incomingColor.images || [])
+            .map((img) => (typeof img === 'object' ? img?.public_id : null))
+            .filter(Boolean)
+        );
+        for (const img of existingColor.images || []) {
+          const pid = typeof img === 'object' ? img?.public_id : null;
+          if (pid && !incomingIds.has(pid)) {
+            toDelete.push(pid);
+          }
+        }
+      }
     }
 
-    delete productData._uploadedFiles;
-    delete productData._imageUrls;
+    if (toDelete.length > 0) {
+      await deleteMultipleFromCloudinary(toDelete);
+    }
+
+    // Normalize colors with order
+    const colors = incomingColors.map((c, ci) => ({
+      name: c.name || '',
+      images: (c.images || []).map((img, ii) => ({
+        url: typeof img === 'string' ? img : img?.url,
+        public_id: typeof img === 'object' ? img?.public_id : null,
+        order: ii,
+      })),
+    }));
+
+    productData.colors = colors;
 
     if (productData.category) {
       const category = await Category.findOne({
@@ -128,7 +158,6 @@ export const updateProduct = async (req, res, next) => {
       }
     }
 
-    // Remove undefined values to avoid overwriting with null
     const updateData = Object.fromEntries(
       Object.entries(productData).filter(([, v]) => v !== undefined && v !== null)
     );
@@ -162,29 +191,69 @@ export const updateProduct = async (req, res, next) => {
       data: product,
     });
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[PUT /products/:id] Error:', error.message);
-    }
     next(error);
   }
 };
 
 /**
- * @desc    Delete product (soft delete)
+ * @desc    Upload product images (returns URLs for client to attach to color)
+ * @route   POST /api/products/upload-images
+ * @access  Private/Admin
+ * Returns [{ url, public_id }] for use in product create/update colors
+ */
+export const uploadProductImages = async (req, res, next) => {
+  try {
+    const files = req.files || [];
+    if (files.length === 0) {
+      throw new ApiError('No images provided', 400);
+    }
+
+    const uploads = await uploadMultipleToCloudinary(
+      files,
+      CLOUDINARY_FOLDERS.PRODUCTS
+    );
+
+    const images = uploads.map((u) => ({
+      url: u.secure_url,
+      public_id: u.public_id,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: images,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Delete product (hard delete)
  * @route   DELETE /api/products/:id
  * @access  Private/Admin
+ * Deletes all color images from Cloudinary, then deletes product from database
  */
 export const deleteProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { isDeleted: true, isActive: false },
-      { new: true }
-    );
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       throw new ApiError('Product not found', 404);
     }
+
+    // Delete color-wise images from Cloudinary
+    if (product.colors?.length) {
+      for (const color of product.colors) {
+        if (color.images?.length) {
+          const colorPublicIds = getPublicIds(color.images);
+          if (colorPublicIds.length > 0) {
+            await deleteMultipleFromCloudinary(colorPublicIds);
+          }
+        }
+      }
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
 
     logAdminActivity({
       action: 'product_delete',
@@ -368,7 +437,7 @@ export const getProducts = async (req, res, next) => {
             title_asc: { title: 1 },
             title_desc: { title: -1 },
           };
-          return sortMap[resolvedSort] || sortMap.latest;
+          return sortMap[resolvedSort] || { createdAt: -1 };
         })(),
       },
       {

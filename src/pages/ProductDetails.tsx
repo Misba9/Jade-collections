@@ -50,9 +50,23 @@ export const ProductDetails = () => {
   useEffect(() => {
     if (p) {
       setSelectedColor(p.colors?.[0] ?? '');
-      setActiveImage(p.images?.[0] ?? p.image ?? '');
+      const imgs = p.images?.length ? p.images : (p.image ? [p.image] : []);
+      const colorImgs = p.colorImages?.[p.colors?.[0] ?? ''];
+      const firstImg = colorImgs?.[0] ?? imgs[0] ?? p.image ?? '';
+      setActiveImage(firstImg);
     }
   }, [p]);
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    const colorImgs = p?.colorImages?.[color];
+    if (colorImgs?.length) {
+      setActiveImage(colorImgs[0]);
+    } else {
+      const imgs = p?.images?.length ? p.images : (p?.image ? [p.image] : []);
+      setActiveImage(imgs[0] ?? p?.image ?? '');
+    }
+  };
 
   if (loading) {
     return (
@@ -73,7 +87,9 @@ export const ProductDetails = () => {
     );
   }
 
-  const images = p.images?.length ? p.images : [p.image, p.image, p.image];
+  const images =
+    (p.colorImages?.[selectedColor]?.length ? p.colorImages[selectedColor] : null) ??
+    (p.images?.length ? p.images : [p.image, p.image, p.image]);
 
   return (
     <motion.div 
@@ -174,7 +190,7 @@ export const ProductDetails = () => {
                   {(p.colors?.length ? p.colors : ['Default']).map(color => (
                     <button
                       key={color}
-                      onClick={() => setSelectedColor(color)}
+                      onClick={() => handleColorSelect(color)}
                       className={cn(
                         "h-10 px-4 border text-sm transition-all min-w-[3rem]",
                         selectedColor === color 

@@ -131,6 +131,12 @@ export const productsApi = {
   update: (id: string, data: FormData | Record<string, unknown>) =>
     adminApi.put(`/products/${id}`, data),
   delete: (id: string) => adminApi.delete(`/products/${id}`),
+  uploadImages: (files: FileList | File[]) => {
+    const fd = new FormData();
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
+    fileArray.forEach((f) => fd.append('images', f));
+    return adminApi.post('/products/upload-images', fd);
+  },
 };
 
 // Categories - public GET for user site, admin CRUD

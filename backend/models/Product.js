@@ -54,12 +54,6 @@ const productSchema = new mongoose.Schema(
       type: Number,
       min: [0, 'Discount price cannot be negative'],
     },
-    images: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
     stock: {
       type: Number,
       required: [true, 'Stock is required'],
@@ -74,8 +68,14 @@ const productSchema = new mongoose.Schema(
     ],
     colors: [
       {
-        type: String,
-        trim: true,
+        name: { type: String, trim: true },
+        images: [
+          {
+            url: { type: String },
+            public_id: { type: String },
+            order: { type: Number, default: 0 },
+          },
+        ],
       },
     ],
     ratings: {
@@ -115,7 +115,20 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
+    toJSON: {
+      virtuals: true,
+      transform(doc, ret) {
+        // Normalize colors: support legacy string[] and new { name, images }[]
+        if (ret.colors && Array.isArray(ret.colors)) {
+          ret.colors = ret.colors.map((c) =>
+            typeof c === 'string'
+              ? { name: c, images: [] }
+              : c
+          );
+        }
+        return ret;
+      },
+    },
     toObject: { virtuals: true },
   }
 );

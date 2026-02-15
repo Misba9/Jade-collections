@@ -4,7 +4,6 @@
  */
 export const parseProductForm = (req) => {
   const body = req.body || {};
-  const files = req.files || [];
 
   const parseArray = (value) => {
     if (Array.isArray(value)) return value.filter(Boolean);
@@ -52,16 +51,29 @@ export const parseProductForm = (req) => {
   const sizes = parseArray(body.sizes);
   if (sizes.length) productData.sizes = sizes;
 
-  const colors = parseArray(body.colors);
-  if (colors.length) productData.colors = colors;
-
-  // Images: from uploaded files (field: images) or URLs in body.images
-  const imageUrls = parseArray(body.images);
-  if (files.length) {
-    productData._uploadedFiles = files;
-  }
-  if (imageUrls.length || body.images !== undefined) {
-    productData._imageUrls = imageUrls;
+  // Colors: new format [{ name, images: [{ url, public_id }] }] or legacy string[]
+  if (body.colors !== undefined) {
+    if (typeof body.colors === 'string') {
+      try {
+        const parsed = JSON.parse(body.colors);
+        if (Array.isArray(parsed)) {
+          productData.colors = parsed.filter((c) => c && (c.name || typeof c === 'string'));
+        }
+      } catch {
+        const legacy = parseArray(body.colors);
+        if (legacy.length) {
+          productData.colors = legacy.map((name) => ({ name: String(name), images: [] }));
+        }
+      }
+    } else if (Array.isArray(body.colors)) {
+      productData.colors = body.colors
+        .filter((c) => c && (c.name || typeof c === 'string'))
+        .map((c) =>
+          typeof c === 'string'
+            ? { name: c, images: [] }
+            : { name: c.name || '', images: c.images || [] }
+        );
+    }
   }
 
   return productData;

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { productsApi, categoriesApi } from '../../lib/api';
 import { DataTable } from '../components/DataTable';
 import { Modal } from '../components/Modal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { FormField } from '../components/FormField';
+import { ColorImageManager, ColorVariant } from '../components/product/ColorImageManager';
 import { Button } from '../../components/ui/Button';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -18,9 +19,8 @@ interface Product {
   isActive: boolean;
   isDeleted?: boolean;
   category?: { _id: string; name: string };
-  images?: string[];
   sizes?: string[];
-  colors?: string[];
+  colors?: ColorVariant[] | string[];
   description?: string;
   isFeatured?: boolean;
 }
@@ -29,6 +29,15 @@ interface Category {
   _id: string;
   name: string;
 }
+
+const normalizeColors = (colors: ColorVariant[] | string[] | undefined): ColorVariant[] => {
+  if (!colors?.length) return [];
+  return colors.map((c) =>
+    typeof c === 'string'
+      ? { name: c, images: [] }
+      : { name: c.name || '', images: c.images || [] }
+  );
+};
 
 export const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,42 +53,46 @@ export const AdminProducts = () => {
     discountPrice: '',
     stock: '',
     sizes: '',
-    colors: '',
     isActive: true,
     isFeatured: false,
   });
+  const [colorVariants, setColorVariants] = useState<ColorVariant[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  const [imageFile, setImageFile] = useState<FileList | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const fetchProducts = () => {
+  const fetchProducts = useCallback(() => {
+    setLoading(true);
     productsApi
-      .listAdmin({ limit: 100, isActive: 'all' })
-      .then((res) => setProducts(res.data.data || []))
+      .listAdmin({ limit: 200, isActive: 'all' })
+      .then((res) => {
+        const data = res.data.data || [];
+        setProducts(data);
+      })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
-  const fetchActiveCategories = () => {
+  const fetchActiveCategories = useCallback(() => {
     categoriesApi
       .list({ isActive: true })
       .then((res) => setCategories(res.data.data || []))
       .catch(() => setCategories([]));
-  };
+  }, []);
 
   useEffect(() => {
     fetchProducts();
     fetchActiveCategories();
-  }, []);
+  }, [fetchProducts, fetchActiveCategories]);
 
   useEffect(() => {
     if (modalOpen) fetchActiveCategories();
-  }, [modalOpen]);
+  }, [modalOpen, fetchActiveCategories]);
 
   const openCreate = () => {
     setEditingProduct(null);
@@ -91,10 +104,10 @@ export const AdminProducts = () => {
       discountPrice: '',
       stock: '',
       sizes: '',
-      colors: '',
       isActive: true,
       isFeatured: false,
     });
+    setColorVariants([]);
     setModalOpen(true);
     setError('');
   };
@@ -109,10 +122,10 @@ export const AdminProducts = () => {
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
       stock: String(p.stock),
       sizes: Array.isArray(p.sizes) ? p.sizes.join(', ') : '',
-      colors: Array.isArray(p.colors) ? p.colors.join(', ') : '',
       isActive: p.isActive,
       isFeatured: p.isFeatured ?? false,
     });
+    setColorVariants(normalizeColors(p.colors));
     setModalOpen(true);
     setError('');
   };
@@ -130,53 +143,22 @@ export const AdminProducts = () => {
         discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : undefined,
         stock: parseInt(formData.stock, 10) || 0,
         sizes: formData.sizes ? formData.sizes.split(',').map((s) => s.trim()).filter(Boolean) : [],
-        colors: formData.colors ? formData.colors.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        colors: colorVariants,
         isActive: formData.isActive,
         isFeatured: formData.isFeatured,
       };
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[AdminProducts] Sending:', imageFile?.length ? 'FormData' : 'JSON', payload);
-      }
-
-      if (imageFile?.length) {
-        const fd = new FormData();
-        fd.append('title', formData.title);
-        fd.append('description', formData.description || '');
-        fd.append('category', formData.category || '');
-        fd.append('price', formData.price);
-        fd.append('discountPrice', formData.discountPrice || '');
-        fd.append('stock', formData.stock);
-        fd.append('sizes', formData.sizes);
-        fd.append('colors', formData.colors);
-        fd.append('isActive', String(formData.isActive));
-        fd.append('isFeatured', String(formData.isFeatured));
-        Array.from(imageFile).forEach((f) => fd.append('images', f));
-        if (editingProduct) {
-          await productsApi.update(editingProduct._id, fd);
-        } else {
-          await productsApi.create(fd);
-        }
+      if (editingProduct) {
+        await productsApi.update(editingProduct._id, payload);
       } else {
-        if (editingProduct?.images?.length) {
-          (payload as Record<string, unknown>).images = editingProduct.images;
-        }
-        if (editingProduct) {
-          await productsApi.update(editingProduct._id, payload);
-        } else {
-          await productsApi.create(payload);
-        }
+        await productsApi.create(payload);
       }
       setModalOpen(false);
-      setImageFile(null);
       fetchProducts();
       toast.success(editingProduct ? 'Product updated' : 'Product created');
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: string }; status?: number } };
-      const errMsg = axiosErr?.response?.data?.error || axiosErr?.response?.data?.message || 'Failed to save';
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[AdminProducts] Save error:', axiosErr?.response?.data || err);
-      }
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      const errMsg = axiosErr?.response?.data?.error || 'Failed to save';
       setError(errMsg);
       toast.error(errMsg);
     } finally {
@@ -286,20 +268,22 @@ export const AdminProducts = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-serif font-semibold text-stone-900">Products</h1>
         <Button onClick={openCreate} className="flex items-center gap-2">
           <Plus className="h-4 w-4" /> Add Product
         </Button>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={products}
-        keyExtractor={(p) => p._id}
-        isLoading={loading}
-        emptyMessage="No products yet"
-      />
+      <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={products}
+          keyExtractor={(p) => p._id}
+          isLoading={loading}
+          emptyMessage="No products yet"
+        />
+      </div>
 
       <Modal
         isOpen={modalOpen}
@@ -311,14 +295,21 @@ export const AdminProducts = () => {
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" form="product-form" isLoading={submitting}>
+            <Button
+              type="submit"
+              form="product-form"
+              isLoading={submitting}
+              disabled={uploading}
+            >
               {editingProduct ? 'Update' : 'Create'}
             </Button>
           </>
         }
       >
-        <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>}
+        <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>
+          )}
           <FormField
             label="Title"
             name="title"
@@ -344,7 +335,9 @@ export const AdminProducts = () => {
               options={categories.map((c) => ({ value: c._id, label: c.name }))}
             />
             {categories.length === 0 && (
-              <p className="mt-1 text-sm text-amber-600">Create a category first in the Categories page.</p>
+              <p className="mt-1 text-sm text-amber-600">
+                Create a category first in the Categories page.
+              </p>
             )}
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -382,44 +375,38 @@ export const AdminProducts = () => {
             onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
             placeholder="S, M, L"
           />
-          <FormField
-            label="Colors (comma-separated)"
-            name="colors"
-            value={formData.colors}
-            onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-            placeholder="Green, Jade, Gold"
-          />
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">Product Images</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => setImageFile(e.target.files?.length ? e.target.files : null)}
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg"
+
+          <div className="border-t border-stone-200 pt-6">
+            <ColorImageManager
+              colors={colorVariants}
+              onChange={setColorVariants}
+              maxImagesPerColor={5}
+              onUploadingChange={setUploading}
             />
-            {editingProduct?.images?.length ? (
-              <p className="text-xs text-stone-500 mt-1">
-                Current: {editingProduct.images.length} image(s). Add more above.
-              </p>
-            ) : null}
           </div>
-          <FormField
-            label="Active"
-            name="isActive"
-            type="checkbox"
-            value={formData.isActive}
-            onChange={(e) => setFormData({ ...formData, isActive: (e.target as HTMLInputElement).checked })}
-            placeholder="Product is visible in store"
-          />
-          <FormField
-            label="Featured"
-            name="isFeatured"
-            type="checkbox"
-            value={formData.isFeatured}
-            onChange={(e) => setFormData({ ...formData, isFeatured: (e.target as HTMLInputElement).checked })}
-            placeholder="Show on homepage"
-          />
+
+          <div className="border-t border-stone-200 pt-6 flex gap-6">
+            <FormField
+              label="Active"
+              name="isActive"
+              type="checkbox"
+              value={formData.isActive}
+              onChange={(e) =>
+                setFormData({ ...formData, isActive: (e.target as HTMLInputElement).checked })
+              }
+              placeholder="Product is visible in store"
+            />
+            <FormField
+              label="Featured"
+              name="isFeatured"
+              type="checkbox"
+              value={formData.isFeatured}
+              onChange={(e) =>
+                setFormData({ ...formData, isFeatured: (e.target as HTMLInputElement).checked })
+              }
+              placeholder="Show on homepage"
+            />
+          </div>
         </form>
       </Modal>
 
@@ -434,7 +421,7 @@ export const AdminProducts = () => {
         title="Delete Product"
         message={
           productToDelete
-            ? `Are you sure you want to delete "${productToDelete.title}"? This will hide it from the store.`
+            ? `Are you sure you want to delete "${productToDelete.title}"? This cannot be undone.`
             : ''
         }
         confirmLabel="Delete"

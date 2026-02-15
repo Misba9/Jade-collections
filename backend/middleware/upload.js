@@ -37,9 +37,17 @@ export const uploadMultiple = (fieldName = 'images', maxCount = 10) =>
   multer(multerConfig).array(fieldName, maxCount);
 
 /**
- * Optional multiple files - skips multer when Content-Type is not multipart (e.g. JSON)
+ * Product images: max 5 images, field name "images"
+ * Uses memory storage - no temp files (buffer goes directly to Cloudinary)
  */
-export const uploadMultipleOptional = (fieldName = 'images', maxCount = 10) => (req, res, next) => {
+export const uploadProductImages = (fieldName = 'images', maxCount = 5) =>
+  multer(multerConfig).array(fieldName, maxCount);
+
+/**
+ * Optional multiple files - skips multer when Content-Type is not multipart (e.g. JSON)
+ * Use for routes that accept both JSON and FormData
+ */
+export const uploadMultipleOptional = (fieldName = 'images', maxCount = 5) => (req, res, next) => {
   const contentType = req.headers['content-type'] || '';
   if (!contentType.includes('multipart/form-data')) {
     req.files = [];
